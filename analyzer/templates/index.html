@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sentiment Analysis Tool</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: linear-gradient(135deg, #0c2340 0%, #1a5276 30%, #2e86c1 60%, #85c1e9 100%);
+            min-height: 100vh;
+            padding: 20px;
+            position: relative;
+        }
+        
+        /* Subtle pattern overlay for business feel */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                linear-gradient(45deg, rgba(255,255,255,0.03) 25%, transparent 25%),
+                linear-gradient(-45deg, rgba(255,255,255,0.03) 25%, transparent 25%),
+                linear-gradient(45deg, transparent 75%, rgba(255,255,255,0.03) 75%),
+                linear-gradient(-45deg, transparent 75%, rgba(255,255,255,0.03) 75%);
+            background-size: 20px 20px;
+            pointer-events: none;
+            z-index: 0;
+        }
+        
+        .container { 
+            max-width: 1000px; 
+            margin: 0 auto; 
+            position: relative;
+            z-index: 1;
+        }
+        
+        .header { text-align: center; margin: 30px 0 20px; }
+        .title { font-size: 32px; color: #ffffff; margin-bottom: 8px; text-shadow: 0 2px 4px rgba(0,0,0,0.3); }
+        .subtitle { font-size: 18px; color: rgba(255,255,255,0.8); font-weight: normal; }
+        .main-card { 
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 12px; 
+            padding: 35px; 
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+        }
+        .description { font-size: 24px; font-weight: 600; color: #1a1a2e; text-align: center; margin-bottom: 30px; }
+        .highlight { color: #2e86c1; }
+        .upload-section { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 30px; }
+        .upload-box { border: 2px dashed #ddd; border-radius: 12px; padding: 20px; text-align: center; transition: all 0.3s; background: rgba(255,255,255,0.5); }
+        .upload-box:hover { border-color: #2e86c1; background: #f8f9ff; }
+        .upload-box h3 { margin-bottom: 15px; color: #333; }
+        .url-input { width: 100%; padding: 14px 16px; font-size: 15px; border: 1px solid #ccc; border-radius: 8px; margin-bottom: 15px; }
+        .url-input:focus { outline: none; border-color: #2e86c1; }
+        .file-input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; margin-bottom: 10px; background: white; }
+        .analyze-btn { 
+            width: 100%; 
+            background: linear-gradient(135deg, #1a5276, #2e86c1);
+            color: white; 
+            border: none; 
+            padding: 14px 20px; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-size: 16px; 
+            font-weight: 600; 
+            transition: all 0.3s; 
+        }
+        .analyze-btn:hover { background: linear-gradient(135deg, #0c2340, #1a5276); transform: translateY(-2px); box-shadow: 0 4px 15px rgba(46, 134, 193, 0.4); }
+        .analyze-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        .error-message { background: #fee; color: #c33; padding: 10px; border-radius: 6px; margin-bottom: 15px; font-size: 14px; }
+        .platforms-section { margin-top: 25px; padding-top: 20px; border-top: 1px solid #e0e0e0; }
+        .platforms-label { font-size: 12px; color: #888; margin-bottom: 12px; text-align: center; }
+        .platform-badges { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+        .platform-badge { display: inline-block; padding: 5px 12px; background: #e8e8e8; border-radius: 20px; font-size: 12px; color: #444; }
+        .features-section { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 25px; padding-top: 20px; border-top: 1px solid #e0e0e0; }
+        .feature-item { text-align: center; padding: 10px; background: #fafafa; border-radius: 8px; }
+        .feature-icon { font-size: 24px; margin-bottom: 6px; }
+        .feature-name { font-weight: 600; font-size: 13px; color: #333; }
+        .feature-desc { font-size: 11px; color: #888; margin-top: 3px; }
+        
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .loading-overlay.active { display: flex; }
+        .loading-box {
+            background: white;
+            border-radius: 16px;
+            padding: 40px 50px;
+            text-align: center;
+            max-width: 400px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid #e0e0e0;
+            border-top: 4px solid #2e86c1;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 20px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .loading-text { font-size: 18px; font-weight: 600; color: #333; margin-bottom: 8px; }
+        .loading-sub { font-size: 13px; color: #888; }
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: #e0e0e0;
+            border-radius: 2px;
+            margin-top: 20px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, #1a5276, #2e86c1);
+            border-radius: 2px;
+            animation: progress 2.5s ease-in-out forwards;
+        }
+        @keyframes progress {
+            0% { width: 0%; }
+            30% { width: 25%; }
+            60% { width: 65%; }
+            100% { width: 100%; }
+        }
+        
+        @media (max-width: 700px) { 
+            .upload-section { grid-template-columns: 1fr; gap: 20px; } 
+            .features-section { grid-template-columns: 1fr; gap: 12px; } 
+            .title { font-size: 26px; } 
+            .description { font-size: 20px; }
+            .loading-box { padding: 30px 20px; margin: 0 20px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 class="title">📊 Sentiment Analysis Tool</h1>
+            <p class="subtitle">Final Year Project</p>
+        </div>
+        
+        <div class="main-card">
+            <div class="description">See what customers <span class="highlight">really think</span></div>
+            
+            <div class="upload-section">
+                <div class="upload-box">
+                    <h3>🔗 Product URL</h3>
+                    <form method="POST" action="/analyze/" id="urlForm">
+                        {% csrf_token %}
+                        <input type="url" name="product_url" class="url-input" placeholder="Paste product URL from Amazon, eBay, Etsy, Temu..." required>
+                        <button type="submit" class="analyze-btn" id="urlBtn">Analyze URL</button>
+                    </form>
+                </div>
+                <div class="upload-box">
+                    <h3>📁 Upload File</h3>
+                    <form method="POST" action="/analyze/" enctype="multipart/form-data" id="fileForm">
+                        {% csrf_token %}
+                        <input type="file" name="review_file" class="file-input" accept=".txt,.csv,.doc,.docx,.pdf">
+                        <button type="submit" class="analyze-btn" id="fileBtn">Analyze File</button>
+                    </form>
+                    <div class="feature-desc" style="margin-top: 10px;">Supported: TXT, CSV, DOC, DOCX, PDF</div>
+                    <div style="font-size: 10px; color: #999; margin-top: 5px;">Each review on a new line</div>
+                </div>
+            </div>
+            
+            {% if error %}
+            <div class="error-message">⚠️ {{ error }}</div>
+            {% endif %}
+            
+            <div class="platforms-section">
+                <div class="platforms-label">Supported Platforms</div>
+                <div class="platform-badges">
+                    <span class="platform-badge">Amazon</span> <span class="platform-badge">Etsy</span> <span class="platform-badge">eBay</span>
+                    <span class="platform-badge">AliExpress</span> <span class="platform-badge">Temu</span> <span class="platform-badge">Walmart</span>
+                    <span class="platform-badge">Facebook</span> <span class="platform-badge">Instagram</span> <span class="platform-badge">TikTok</span>
+                </div>
+            </div>
+            
+            <div class="features-section">
+                <div class="feature-item"><div class="feature-icon">🌍</div><div class="feature-name">Multiple Languages</div><div class="feature-desc">Twi · Hausa · English · Spanish · French</div></div>
+                <div class="feature-item"><div class="feature-icon">⭐</div><div class="feature-name">Star Ratings</div><div class="feature-desc">1-5 stars with confidence scoring</div></div>
+                <div class="feature-item"><div class="feature-icon">📈</div><div class="feature-name">Sentiment Score</div><div class="feature-desc">Overall positive/negative analysis</div></div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-box">
+            <div class="spinner"></div>
+            <div class="loading-text">🔍 Analyzing Reviews</div>
+            <div class="loading-sub">Processing customer feedback...</div>
+            <div class="progress-bar">
+                <div class="progress-fill"></div>
+            </div>
+            <div style="margin-top: 15px; font-size: 12px; color: #aaa;">Please wait, this may take a few seconds</div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('urlForm').addEventListener('submit', function(e) {
+            const input = document.querySelector('input[name="product_url"]');
+            if (!input.value.trim()) {
+                e.preventDefault();
+                return;
+            }
+            document.getElementById('loadingOverlay').classList.add('active');
+            document.getElementById('urlBtn').disabled = true;
+            document.getElementById('urlBtn').textContent = 'Processing...';
+        });
+        
+        document.getElementById('fileForm').addEventListener('submit', function(e) {
+            const fileInput = document.querySelector('input[name="review_file"]');
+            if (!fileInput.files.length) {
+                e.preventDefault();
+                alert('Please select a file first');
+                return;
+            }
+            document.getElementById('loadingOverlay').classList.add('active');
+            document.getElementById('fileBtn').disabled = true;
+            document.getElementById('fileBtn').textContent = 'Processing...';
+        });
+        
+        window.addEventListener('load', function() {
+            const overlay = document.getElementById('loadingOverlay');
+            if (overlay) {
+                overlay.classList.remove('active');
+            }
+        });
+    </script>
+</body>
+</html>

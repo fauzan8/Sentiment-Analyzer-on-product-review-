@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analysis Results</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; padding: 20px; }
+        .container { max-width: 1100px; margin: 0 auto; }
+        .nav { margin-bottom: 20px; }
+        .back-link { display: inline-block; background: #667eea; color: white; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 13px; }
+        .back-link:hover { background: #5a67d8; }
+        .card { background: white; border-radius: 12px; padding: 30px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        h1 { font-size: 24px; margin-bottom: 5px; }
+        h2 { font-size: 18px; margin: 20px 0 15px; color: #333; border-bottom: 2px solid #667eea; padding-bottom: 8px; }
+        h3 { font-size: 16px; margin: 15px 0 10px; }
+        h4 { font-size: 14px; margin: 10px 0 5px; }
+        .url-text { font-size: 12px; color: #888; word-break: break-all; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 1px solid #e0e0e0; }
+        
+        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 25px; }
+        .stat-card { background: #f8f9fa; border-radius: 12px; padding: 20px; text-align: center; transition: transform 0.2s; }
+        .stat-card:hover { transform: translateY(-3px); }
+        .stat-number { font-size: 32px; font-weight: bold; }
+        .stat-label { font-size: 12px; color: #666; margin-top: 5px; }
+        .positive { color: #28a745; }
+        .neutral { color: #ffc107; }
+        .negative { color: #dc3545; }
+        
+        .score-box { background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 25px; border-radius: 12px; text-align: center; margin-bottom: 25px; }
+        .score-label { font-size: 12px; letter-spacing: 1px; margin-bottom: 8px; opacity: 0.9; }
+        .score-value { font-size: 48px; font-weight: bold; margin-bottom: 5px; }
+        .score-status { font-size: 24px; font-weight: 600; margin-bottom: 15px; }
+        .score-desc { font-size: 13px; opacity: 0.9; line-height: 1.5; max-width: 80%; margin: 0 auto; }
+        
+        .info-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 25px; }
+        .info-card { background: #f8f9fa; border-radius: 12px; padding: 18px; }
+        .info-title { font-size: 11px; font-weight: 600; color: #888; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .info-value { font-size: 28px; font-weight: bold; color: #333; }
+        
+        .sample-box { padding: 12px; border-radius: 8px; margin-bottom: 10px; transition: transform 0.2s; }
+        .sample-box:hover { transform: translateX(5px); }
+        .sample-positive { background: #e8f5e9; border-left: 4px solid #28a745; }
+        .sample-neutral { background: #fff8e1; border-left: 4px solid #ffc107; }
+        .sample-negative { background: #ffebee; border-left: 4px solid #dc3545; }
+        
+        .lang-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+        .lang-tag { background: white; padding: 4px 10px; border-radius: 15px; font-size: 12px; color: #667eea; }
+        .emoji-tag { background: white; padding: 4px 10px; border-radius: 15px; font-size: 18px; display: inline-flex; align-items: center; gap: 5px; }
+        
+        .clearfix::after { content: ""; clear: both; display: table; }
+        .print-btn { background: #dc3545; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; float: right; margin-bottom: 15px; font-size: 13px; }
+        .print-btn:hover { background: #c82333; }
+        
+        .emoji-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+        
+        @media (max-width: 800px) {
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .info-row { grid-template-columns: 1fr; }
+            .score-desc { max-width: 100%; }
+            .card { padding: 20px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="nav">
+            <a href="/" class="back-link">← Back to search</a>
+        </div>
+        
+        <div class="card">
+            <div class="clearfix">
+                <h1>📊 Sentiment Analysis Results</h1>
+                <button onclick="window.print()" class="print-btn">📄 Save as PDF</button>
+            </div>
+            <div class="url-text"><strong>Product URL:</strong> {{ url|truncatechars:100 }}</div>
+            
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number positive">{{ positive_percentage }}%</div>
+                    <div class="stat-label">Positive</div>
+                    <div class="stat-label">{{ happy_count }} reviews</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number neutral">{{ neutral_percentage }}%</div>
+                    <div class="stat-label">Neutral</div>
+                    <div class="stat-label">{{ neutral_count }} reviews</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number negative">{{ negative_percentage }}%</div>
+                    <div class="stat-label">Negative</div>
+                    <div class="stat-label">{{ negative_count }} reviews</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">{{ sentiment_score|floatformat:0 }}</div>
+                    <div class="stat-label">Sentiment Score</div>
+                    <div class="stat-label">/100</div>
+                </div>
+            </div>
+            
+            <div class="score-box">
+                <div class="score-label">OVERALL SENTIMENT</div>
+                <div class="score-status">{{ sentiment_status }}</div>
+                <div class="score-value">{{ sentiment_score|floatformat:1 }}/100</div>
+                <div class="score-desc">{{ sentiment_description }}</div>
+            </div>
+            
+            <div class="info-row">
+                <div class="info-card">
+                    <div class="info-title">📝 Reviews Analyzed</div>
+                    <div class="info-value">{{ total }}</div>
+                    <div class="info-title" style="margin-top: 8px;">Total customer reviews</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-title">🌍 Languages Found</div>
+                    <div class="info-value">{{ languages_count }}</div>
+                    <div class="lang-tags">
+                        {% for lang, count in top_languages %}
+                        <span class="lang-tag">{{ lang }} ({{ count }})</span>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% if top_emojis %}
+                <div class="info-card">
+                    <div class="info-title">😊 Top Emojis Found</div>
+                    <div class="emoji-row">
+                        {% for emoji, count in top_emojis %}
+                        <span class="emoji-tag">{{ emoji }} ×{{ count }}</span>
+                        {% endfor %}
+                    </div>
+                    <div class="info-title" style="margin-top: 8px;">Total emojis: {{ total_emojis }}</div>
+                </div>
+                {% endif %}
+            </div>
+            
+            <h2>📝 Sample Customer Reviews</h2>
+            
+            {% if positive_samples %}
+            <h3 style="color:#28a745;">✅ Positive Reviews</h3>
+            {% for review in positive_samples %}
+            <div class="sample-box sample-positive">
+                <div>⭐ Rating: {{ review.rating }}/5 | Confidence: {{ review.confidence }}%</div>
+                {% if review.emojis %}
+                <div class="emoji-row" style="margin-top: 5px;">
+                    Emojis: {% for emoji in review.emojis %}<span style="font-size: 18px; margin-right: 3px;">{{ emoji }}</span>{% endfor %}
+                </div>
+                {% endif %}
+                <div style="margin-top: 8px;">"{{ review.text }}"</div>
+            </div>
+            {% endfor %}
+            {% endif %}
+            
+            {% if neutral_samples %}
+            <h3 style="color:#ffc107;">🟡 Neutral Reviews</h3>
+            {% for review in neutral_samples %}
+            <div class="sample-box sample-neutral">
+                <div>⭐ Rating: {{ review.rating }}/5 | Confidence: {{ review.confidence }}%</div>
+                {% if review.emojis %}
+                <div class="emoji-row" style="margin-top: 5px;">
+                    Emojis: {% for emoji in review.emojis %}<span style="font-size: 18px; margin-right: 3px;">{{ emoji }}</span>{% endfor %}
+                </div>
+                {% endif %}
+                <div style="margin-top: 8px;">"{{ review.text }}"</div>
+            </div>
+            {% endfor %}
+            {% endif %}
+            
+            {% if negative_samples %}
+            <h3 style="color:#dc3545;">❌ Negative Reviews</h3>
+            {% for review in negative_samples %}
+            <div class="sample-box sample-negative">
+                <div>⭐ Rating: {{ review.rating }}/5 | Confidence: {{ review.confidence }}%</div>
+                {% if review.emojis %}
+                <div class="emoji-row" style="margin-top: 5px;">
+                    Emojis: {% for emoji in review.emojis %}<span style="font-size: 18px; margin-right: 3px;">{{ emoji }}</span>{% endfor %}
+                </div>
+                {% endif %}
+                <div style="margin-top: 8px;">"{{ review.text }}"</div>
+            </div>
+            {% endfor %}
+            {% endif %}
+            
+            {% if not positive_samples and not neutral_samples and not negative_samples %}
+            <div style="text-align: center; padding: 40px; color: #888;">
+                <p>No reviews found. Please try another product URL or upload a file.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>
